@@ -9,14 +9,17 @@ function errorHandler(error: Error, req: Request, res: Response, next: NextFunct
   }
 
   if (error instanceof AppError) {
-    res.status(error.code).json(error);
+    res.status(error.code).json({ statusCode: error.code, error: error.message });
   } else if (error instanceof ValidationError) {
     res.status(StatusCodes.BAD_REQUEST).json({
       code: StatusCodes.BAD_REQUEST,
-      error: error.errors[0],
+      error: error,
     });
   } else {
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json("Error Server");
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      code: StatusCodes.INTERNAL_SERVER_ERROR,
+      error,
+    });
   }
 
   return next();

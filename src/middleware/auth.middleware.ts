@@ -13,23 +13,24 @@ export interface ConsumerRequest extends Request {
 }
 
 export const checkAuthConsumer: RequestHandler = async (req: ConsumerRequest, res: Response, next: NextFunction) => {
+  await TokenModel.deleteMany({ expires: null });
   const token = req.headers[HEADER.AUTHORIZATION] as string;
   if (!token) {
-    return res.status(StatusCodes.UNAUTHORIZED).json("Forbidden Error");
+    return res.status(StatusCodes.UNAUTHORIZED).json({ statusCode: 401, data: "Forbidden Error" });
   }
   const user = tokenUtil.decodeToken(token) as { userId: string; username: string };
   if (!user) {
-    return res.status(StatusCodes.UNAUTHORIZED).json("Forbidden Error");
+    return res.status(StatusCodes.UNAUTHORIZED).json({ statusCode: 401, data: "Forbidden Error" });
   }
   const data = await TokenModel.findOne({ userId: new mongoose.Types.ObjectId(user.userId) });
   if (!data) {
-    return res.status(StatusCodes.UNAUTHORIZED).json("Forbidden Error");
+    return res.status(StatusCodes.UNAUTHORIZED).json({ statusCode: 401, data: "Forbidden Error" });
   }
   try {
     const userReq = tokenUtil.verifyToken(token, data.keyToken);
     req.user = userReq;
     return next();
   } catch (err) {
-    return res.status(StatusCodes.UNAUTHORIZED).json("Forbidden Error");
+    return res.status(StatusCodes.UNAUTHORIZED).json({ statusCode: 401, data: "Forbidden Error" });
   }
 };

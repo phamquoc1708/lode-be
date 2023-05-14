@@ -8,4 +8,8 @@ export class TokenService {
     const storeKey = await this.model.create({ userId, keyToken });
     return storeKey;
   }
+
+  async deleteToken(userId: string) {
+    return await this.model.deleteMany({ userId });
+  }
 }

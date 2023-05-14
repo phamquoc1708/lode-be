@@ -5,6 +5,7 @@ import mongoosePaginate from "mongoose-paginate-v2";
 export interface Token {
   userId: Schema.Types.ObjectId;
   keyToken: string;
+  expires: Date;
 }
 
 const tokenSchema = new mongoose.Schema<Token>(
@@ -17,12 +18,18 @@ const tokenSchema = new mongoose.Schema<Token>(
       type: String,
       required: true,
     },
+    expires: {
+      type: Date,
+      default: Date.now(),
+    },
   },
   {
     timestamps: true,
     collection: "Tokens",
   }
 );
+
+tokenSchema.index({ expires: 1 }, { expireAfterSeconds: 60 * 60 * 24 });
 
 tokenSchema.plugin(mongoosePaginate);
 
