@@ -2,7 +2,16 @@ import { JSONSchemaType } from "ajv";
 import { ValidationService } from "@/src/helper/validation.service";
 import { HandleFunc } from "@/src/controller";
 import { UserService } from "@/src/user/services/user.service";
-import { ConsumerRegisterInput, ConsumerLoginInput, ConsumerBankAccountInput, ConsumerBetInput, ConsumerMoneyInput } from "@/src/user/types/consumer.types";
+import {
+  ConsumerRegisterInput,
+  ConsumerLoginInput,
+  ConsumerBankAccountInput,
+  ConsumerBetInput,
+  ConsumerMoneyInput,
+  ConsumerUpdateProfileInput,
+  ConsumerCreateDepositInput,
+  ConsumerCreateWithdrawInput,
+} from "@/src/user/types/consumer.types";
 import { StatusCodes } from "http-status-codes";
 
 export class ConsumerController {
@@ -69,6 +78,7 @@ export class ConsumerController {
       required: ["bank", "numberBank", "ownBank"],
     };
     return async (req, res, next) => {
+      console.log(req.body);
       const payload = this.validation.validate(schema, req.body);
       const user = req.user;
       const result = await this.userService.createBankAccount(user.userId, payload);
@@ -91,6 +101,8 @@ export class ConsumerController {
       res.status(StatusCodes.OK).json({ data: result });
     };
   }
+
+  create;
 
   getBankDeposit(): HandleFunc {
     return async (req, res, next) => {
@@ -133,14 +145,11 @@ export class ConsumerController {
     const schema: JSONSchemaType<ConsumerMoneyInput> = {
       type: "object",
       properties: {
-        type: { type: "string" },
         bank: { type: "string" },
         totalMoney: { type: "number" },
-        formalityBank: { type: "string" },
         codeTransfer: { type: "string" },
-        note: { type: "string" },
       },
-      required: ["type", "bank", "totalMoney", "formalityBank", "codeTransfer", "note"],
+      required: ["bank", "totalMoney", "codeTransfer"],
     };
     return async (req, res, next) => {
       const user = req.user;
@@ -153,8 +162,56 @@ export class ConsumerController {
   getHistoryMoney(): HandleFunc {
     return async (req, res, next) => {
       const user = req.user;
-      const limit = req.params.limit;
+      const limit = req.query.limit;
       const result = await this.userService.getHistoryMoney(user.userId, parseInt(limit as string));
+      res.status(StatusCodes.OK).json({ data: result });
+    };
+  }
+
+  updateProfile(): HandleFunc {
+    const schema: JSONSchemaType<ConsumerUpdateProfileInput> = {
+      type: "object",
+      properties: {
+        fullName: { type: "string" },
+      },
+      required: ["fullName"],
+    };
+    return async (req, res) => {
+      const user = req.user;
+      const payload = this.validation.validate(schema, req.body);
+
+      const result = await this.userService.updateProfile(user.userId, payload);
+      res.status(StatusCodes.OK).json({ data: result });
+    };
+  }
+
+  getBankExist(): HandleFunc {
+    return async (req, res) => {
+      const user = req.user;
+      const bank = req.query.bank as string;
+      const result = await this.userService.getBankExist(user.userId, bank);
+      res.status(StatusCodes.OK).json({ data: result });
+    };
+  }
+
+  createBankWithdraw(): HandleFunc {
+    const schema: JSONSchemaType<ConsumerCreateWithdrawInput> = {
+      type: "object",
+      properties: {
+        bank: { type: "string" },
+        totalMoney: { type: "number" },
+        ownBank: { type: "string" },
+        numberBank: { type: "string" },
+      },
+      required: ["ownBank", "totalMoney", "bank", "numberBank"],
+    };
+    return async (req, res) => {
+      const user = req.user;
+      console.log(user);
+      console.log(req.body);
+      const payload = this.validation.validate(schema, req.body);
+
+      const result = await this.userService.createBankWithdraw(user.userId, payload);
       res.status(StatusCodes.OK).json({ data: result });
     };
   }
