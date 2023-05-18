@@ -11,7 +11,7 @@ import { UserService } from "@/src/user/services/user.service";
 import { ConsumerController } from "@/src/user/controllers";
 import { ValidationService } from "@/src/helper/validation.service";
 import { asyncHandler } from "@/src/utils/handler";
-import { checkAuthConsumer } from "@/src/middleware/auth.middleware";
+import { checkAuthConsumer, checkAuthAdmin } from "@/src/middleware/auth.middleware";
 
 const router = express.Router();
 
@@ -25,9 +25,12 @@ router.post("/register", asyncHandler(consumerController.register()));
 router.post("/login", asyncHandler(consumerController.login()));
 router.post("/logout", checkAuthConsumer, asyncHandler(consumerController.logout()));
 router.get("/me", checkAuthConsumer, asyncHandler(consumerController.getMyProfile()));
+router.put("/me", checkAuthConsumer, asyncHandler(consumerController.updateProfile()));
+router.get("/bank", checkAuthConsumer, asyncHandler(consumerController.getBankExist()));
 router.post("/bank-account", checkAuthConsumer, asyncHandler(consumerController.createBankAccount()));
 router.get("/bank-account", checkAuthConsumer, asyncHandler(consumerController.getBankAccount()));
 router.get("/bank-withdraw", checkAuthConsumer, asyncHandler(consumerController.getBankWithdraw()));
+router.post("/bank-withdraw", checkAuthConsumer, asyncHandler(consumerController.createBankWithdraw()));
 router.get("/bank-deposit", checkAuthConsumer, asyncHandler(consumerController.getBankDeposit()));
 router.post("/bet", checkAuthConsumer, asyncHandler(consumerController.betGame()));
 router.get("/bet", checkAuthConsumer, asyncHandler(consumerController.getHistoryGame()));

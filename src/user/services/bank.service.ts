@@ -19,6 +19,10 @@ export class BankService {
     return await this.model.paginate({ userId }, { ...paginate });
   }
 
+  async getBankAccount(userId: string, bank: string) {
+    return await this.model.findOne({ userId, bank });
+  }
+
   async deleteBank(userId: string) {
     return await this.model.deleteMany({ userId });
   }
@@ -29,5 +33,13 @@ export class BankService {
 
   async getBankDeposit() {
     return await this.modelBankDeposit.find({});
+  }
+
+  async getBankWithdrawById(id: string) {
+    return await this.modelBankWithdraw.findOne({ _id: id });
+  }
+
+  async getBankDepositById(id: string) {
+    return await this.modelBankDeposit.findOne({ _id: id });
   }
 }

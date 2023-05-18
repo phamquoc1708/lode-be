@@ -5,8 +5,17 @@ import { StatusCodes } from "http-status-codes";
 import bcrypt from "bcrypt";
 
 import tokenUntil from "@/src/utils/token";
-import { UserDoc } from "@/src/user/schemas/user.schema";
-import { ConsumerBankAccountInput, ConsumerBetInput, ConsumerLoginInput, ConsumerRegisterInput, ConsumerMoneyInput } from "@/src/user/types/consumer.types";
+import { UserDoc, TYPE_BANK, FORMALITY_BANK, STATUS_MONEY } from "@/src/user/schemas/user.schema";
+import {
+  ConsumerBankAccountInput,
+  ConsumerBetInput,
+  ConsumerLoginInput,
+  ConsumerRegisterInput,
+  ConsumerMoneyInput,
+  ConsumerUpdateProfileInput,
+  ConsumerCreateDepositInput,
+  ConsumerCreateWithdrawInput,
+} from "@/src/user/types/consumer.types";
 import { AppError } from "@/src/utils/error";
 import { TokenService } from "./token.service";
 import { getInfoData } from "@/src/utils/getInfo";
@@ -59,12 +68,50 @@ export class UserService {
   }
 
   async getMyProfile(userId: string) {
-    const user = await this.model.findById(userId);
-    if (!user) {
-      throw new AppError(StatusCodes.BAD_REQUEST, "Can't find profile");
-    }
+    try {
+      let totalMoney = await this.model.aggregate([
+        { $match: { _id: new mongoose.Types.ObjectId(userId) } },
+        { $unwind: "$historyMoney" },
+        { $match: { "historyMoney.status": { $eq: STATUS_MONEY.SUCCESS } } },
+        {
+          $group: {
+            _id: null,
+            total: {
+              $sum: {
+                $cond: [
+                  { $eq: [{ $ifNull: ["$historyMoney", null] }, null] },
+                  null,
+                  {
+                    $cond: [{ $eq: ["$historyMoney.type", TYPE_BANK.NAP] }, "$historyMoney.totalMoney", { $multiply: ["$historyMoney.totalMoney", -1] }],
+                  },
+                ],
+              },
+            },
+          },
+        },
+      ]);
+      console.log(totalMoney);
+      const tempTotal = totalMoney[0]?.total || 0;
+      const user = await this.model.findOneAndUpdate({ _id: userId }, { $set: { totalMoney: tempTotal } }, { new: true });
+      if (!user) {
+        throw new AppError(StatusCodes.BAD_REQUEST, "Can't find profile");
+      }
 
-    return getInfoData({ fields: ["username", "displayName", "phone", "role", "totalMoney", "fullName"], object: user });
+      return getInfoData({ fields: ["username", "displayName", "phone", "role", "totalMoney", "fullName"], object: user });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async updateProfile(userId: string, payload: ConsumerUpdateProfileInput) {
+    const user = await this.model.findOneAndUpdate(
+      { _id: userId },
+      {
+        fullName: payload.fullName,
+      }
+    );
+    if (!user) throw new AppError(StatusCodes.BAD_REQUEST, "Can't find profile");
+    return user;
   }
 
   async logout(userId: string) {
@@ -73,7 +120,8 @@ export class UserService {
   }
 
   async createBankAccount(userId: string, payload: ConsumerBankAccountInput) {
-    const user = await this.model.findById(userId);
+    const user = await this.model.findOne({ _id: userId });
+    console.log(user);
     if (!user) {
       throw new AppError(StatusCodes.BAD_REQUEST, "Can't find user");
     }
@@ -110,20 +158,61 @@ export class UserService {
   async addMoney(userId: string, payload: ConsumerMoneyInput) {
     const user = await this.model.findOne({ _id: userId }).exec();
     if (!user) throw new AppError(StatusCodes.BAD_REQUEST, "Can't find user");
-    return await this.model.findOneAndUpdate({ _id: userId }, { $push: { historyMoney: { ...payload, bank: new mongoose.Types.ObjectId(payload.bank) } } });
+    const bank = await this.bankService.getBankDepositById(payload.bank);
+    if (!bank) throw new AppError(StatusCodes.BAD_REQUEST, "Bank not found");
+    return await this.model.findOneAndUpdate(
+      { _id: userId },
+      {
+        $push: {
+          historyMoney: {
+            $each: [
+              {
+                ...payload,
+                bank: bank,
+                type: TYPE_BANK.NAP,
+                formalityBank: FORMALITY_BANK.BANKING,
+              },
+            ],
+            $position: 0,
+            $slice: -20,
+          },
+        },
+      }
+    );
   }
 
   async getHistoryMoney(userId: string, limit: number) {
-    const user = await this.model
-      .findOne({ _id: userId })
-      .populate([
-        {
-          path: "historyMoney.bank",
-        },
-      ])
-      .exec();
+    const user = await this.model.findOne({ _id: userId });
     if (!user) throw new AppError(StatusCodes.BAD_REQUEST, "Can't find user");
-
     return user.historyMoney.slice(0, limit);
+  }
+
+  async getBankExist(userId: string, bank: string) {
+    const user = await this.bankService.getBankAccount(userId, bank);
+    return user;
+  }
+
+  async createBankWithdraw(userId: string, payload: ConsumerCreateWithdrawInput) {
+    const bank = await this.bankService.getBankWithdrawById(payload.bank);
+    if (!bank) throw new AppError(StatusCodes.BAD_REQUEST, "Bank not found");
+    return await this.model.findOneAndUpdate(
+      { _id: userId },
+      {
+        $push: {
+          historyMoney: {
+            $each: [
+              {
+                ...payload,
+                bank,
+                type: TYPE_BANK.RUT,
+                formalityBank: FORMALITY_BANK.BANKING,
+              },
+            ],
+            $position: 0,
+            $slice: -20,
+          },
+        },
+      }
+    );
   }
 }

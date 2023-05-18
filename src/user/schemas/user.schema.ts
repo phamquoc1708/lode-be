@@ -1,3 +1,4 @@
+import { BankWithdraw } from "./bankWithdraw.schema";
 import mongoose, { PaginateModel } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
 
@@ -16,22 +17,22 @@ const STATUS_BET = {
 
 const TYPE_BET = ["Đánh lô", "3 càng", "Đánh đề ", "Đầu đuôi", "Lô xiên"];
 
-const STATUS_MONEY = {
+export const STATUS_MONEY = {
   WAITING: "WAITING",
   SUCCESS: "SUCCESS",
   FAIL: "FAIL",
 };
 
-const FORMALITY_BANK = {
+export const FORMALITY_BANK = {
   BANKING: "Chuyển khoản",
 };
 
-const TYPE_BANK = {
+export const TYPE_BANK = {
   NAP: "Nạp",
   RUT: "Rút",
 };
 
-const ROLE_CONSUMER = {
+export const ROLE_CONSUMER = {
   ADMIN: "ADMIN",
   SUP_ADMIN: "SUP_ADMIN",
   CONSUMER: "CONSUMER",
@@ -96,11 +97,10 @@ const HistoryMoney = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: TYPE_BANK,
+      enum: [TYPE_BANK.NAP, TYPE_BANK.RUT],
     },
     bank: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "BankDeposit",
+      type: mongoose.Schema.Types.Mixed,
     },
     totalMoney: {
       type: Number,
@@ -116,6 +116,7 @@ const HistoryMoney = new mongoose.Schema(
     },
     note: {
       type: String,
+      default: "",
     },
     status: {
       type: String,
@@ -144,6 +145,7 @@ const userSchema = new mongoose.Schema<User>(
     },
     totalMoney: {
       type: Number,
+      required: true,
       default: 0,
     },
     fullName: {

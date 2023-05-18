@@ -28,9 +28,23 @@ export type ConsumerBetInput = {
 
 export type ConsumerMoneyInput = {
   totalMoney: number;
-  type: string;
-  formalityBank: string;
   codeTransfer: string;
-  note: string;
   bank: string;
+};
+
+export type ConsumerUpdateProfileInput = {
+  fullName: string;
+};
+
+export type ConsumerCreateDepositInput = {
+  bank: string;
+  totalMoney: number;
+  codeTransfer: string;
+};
+
+export type ConsumerCreateWithdrawInput = {
+  bank: string;
+  totalMoney: number;
+  ownBank: string;
+  numberBank: string;
 };
