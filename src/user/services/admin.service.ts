@@ -1,9 +1,11 @@
-import { STATUS_MONEY, TYPE_BANK } from "./../schemas/user.schema";
-import { PaginateModel } from "mongoose";
+import { STATUS_BET, STATUS_MONEY, TYPE_BANK } from "./../schemas/user.schema";
+import mongoose, { PaginateModel } from "mongoose";
 import { UserDoc } from "../schemas/user.schema";
 import { TokenService } from "./token.service";
 import { BankService } from "./bank.service";
-import { AdminDepositInput } from "../types/admin.types";
+import { AdminBetInput, AdminDepositInput } from "../types/admin.types";
+import { AppError } from "@/src/utils/error";
+import { StatusCodes } from "http-status-codes";
 
 export class AdminService {
   constructor(public model: PaginateModel<UserDoc>, private bankService: BankService) {}
@@ -66,7 +68,6 @@ export class AdminService {
         },
       },
     ]);
-    console.log(result);
     const data: Array<any> = [];
     for (let i = 0; i < result.length; i++) {
       for (let j = 0; j < result[i].historyMoney.length; j++) {
@@ -106,5 +107,131 @@ export class AdminService {
     } catch (err) {
       console.log(err);
     }
+  }
+
+  async getListBetWaiting() {
+    const result = await this.model.aggregate([
+      {
+        $match: {
+          "historyBet.status": "WAITING",
+        },
+      },
+      {
+        $project: {
+          username: 1,
+          historyBet: {
+            $filter: {
+              input: "$historyBet",
+              as: "bet",
+              cond: { $eq: ["$$bet.status", "WAITING"] },
+            },
+          },
+        },
+      },
+    ]);
+    const data: Array<any> = [];
+    for (let i = 0; i < result.length; i++) {
+      for (let j = 0; j < result[i].historyBet.length; j++) {
+        data.push({
+          _id: result[i].historyBet[j]._id,
+          username: result[i].username,
+          moneyBet: result[i].historyBet[j].moneyBet,
+          numberBet: result[i].historyBet[j].numberBet,
+          gameBet: result[i].historyBet[j].gameBet,
+          miniGameBet: result[i].historyBet[j].miniGameBet,
+          region: result[i].historyBet[j].region,
+          dai: result[i].historyBet[j].dai,
+          moneyOneNumber: result[i].historyBet[j].moneyOneNumber,
+          winOneNumber: result[i].historyBet[j].winOneNumber,
+          totalNumberWin: result[i].historyBet[j].totalNumberWin,
+          dateBet: result[i].historyBet[j].dateBet,
+          ratio: result[i].historyBet[j].ratio,
+          status: result[i].historyBet[j].status,
+        });
+      }
+    }
+    return data;
+  }
+
+  async getListBetDone() {
+    const result = await this.model.aggregate([
+      {
+        $match: {
+          "historyBet.status": { $in: ["WIN", "LOSE"] },
+        },
+      },
+      {
+        $project: {
+          username: 1,
+          historyBet: {
+            $filter: {
+              input: "$historyBet",
+              as: "bet",
+              cond: { $in: ["$$bet.status", ["LOSE", "WIN"]] },
+            },
+          },
+        },
+      },
+    ]);
+    const data: Array<any> = [];
+    for (let i = 0; i < result.length; i++) {
+      for (let j = 0; j < result[i].historyBet.length; j++) {
+        data.push({
+          _id: result[i].historyBet[j]._id,
+          username: result[i].username,
+          moneyBet: result[i].historyBet[j].moneyBet,
+          numberBet: result[i].historyBet[j].numberBet,
+          gameBet: result[i].historyBet[j].gameBet,
+          miniGameBet: result[i].historyBet[j].miniGameBet,
+          region: result[i].historyBet[j].region,
+          dai: result[i].historyBet[j].dai,
+          moneyOneNumber: result[i].historyBet[j].moneyOneNumber,
+          winOneNumber: result[i].historyBet[j].winOneNumber,
+          totalNumberWin: result[i].historyBet[j].totalNumberWin,
+          totalMoneyGetAfterBet: result[i].historyBet[j].totalMoneyGetAfterBet,
+          dateBet: result[i].historyBet[j].dateBet,
+          ratio: result[i].historyBet[j].ratio,
+          status: result[i].historyBet[j].status,
+        });
+      }
+    }
+    return data;
+  }
+
+  async winBet(payload: AdminBetInput) {
+    try {
+      const user = await this.model.findOne({
+        username: payload.username,
+      });
+      if (!user) throw new AppError(StatusCodes.BAD_REQUEST, "Not found user");
+
+      for (let i = 0; i < user.historyBet.length; i++) {
+        if (user.historyBet[i]._id.toString() === payload.betId) {
+          user.historyBet[i].status = STATUS_BET.WIN;
+          user.historyBet[i].totalMoneyGetAfterBet = Math.ceil(
+            user.historyBet[i].moneyOneNumber * user.historyBet[i].winOneNumber * user.historyBet[i].totalNumberWin
+          );
+        }
+      }
+      await user.save();
+      return;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async loseBet(payload: AdminBetInput) {
+    const user = await this.model.findOne({
+      username: payload.username,
+    });
+    if (!user) throw new AppError(StatusCodes.BAD_REQUEST, "Not found user");
+
+    for (let i = 0; i < user.historyBet.length; i++) {
+      if (user.historyBet[i]._id.toString() === payload.betId) {
+        user.historyBet[i].status = STATUS_BET.LOSE;
+      }
+    }
+    await user.save();
+    return;
   }
 }

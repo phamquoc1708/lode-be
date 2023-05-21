@@ -9,7 +9,7 @@ const STATUS_USER = {
 
 const REGION = ["Miền Bắc", "Miền Trung", "Miền Nam"];
 
-const STATUS_BET = {
+export const STATUS_BET = {
   WAITING: "WAITING",
   WIN: "WIN",
   LOSE: "LOSE",
@@ -58,28 +58,47 @@ const HistoryBet = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    winOrLose: {
-      type: String,
-      enum: ["WIN", "LOSE", "WAITING"],
-      default: "WAITING",
-    },
-    totalMoney: {
+    moneyBet: {
       type: Number,
       default: 0,
     },
-    typeBet: {
+    numberBet: {
       type: String,
-      enum: TYPE_BET,
+    },
+    gameBet: {
+      type: String,
+    },
+    miniGameBet: {
+      type: String,
     },
     region: {
       type: String,
       enum: REGION,
     },
-    numberBet: {
+    dai: {
       type: String,
     },
-    rateBet: {
+    moneyOneNumber: {
       type: Number,
+      default: 0,
+    },
+    winOneNumber: {
+      type: Number,
+      default: 0,
+    },
+    totalNumberWin: {
+      type: Number,
+      default: 1,
+    },
+    dateBet: {
+      type: String,
+    },
+    totalMoneyGetAfterBet: {
+      type: Number,
+      default: 0,
+    },
+    ratio: {
+      type: String,
     },
     status: {
       type: String,
@@ -121,7 +140,6 @@ const HistoryMoney = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      enum: [STATUS_MONEY.WAITING, STATUS_MONEY.SUCCESS, STATUS_MONEY.FAIL],
       default: STATUS_MONEY.WAITING,
     },
   },

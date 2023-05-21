@@ -90,8 +90,22 @@ export class UserService {
           },
         },
       ]);
-      console.log(totalMoney);
-      const tempTotal = totalMoney[0]?.total || 0;
+
+      let totalMoneyBet = await this.model.aggregate([
+        { $match: { _id: new mongoose.Types.ObjectId(userId) } },
+        { $unwind: "$historyBet" },
+        {
+          $group: {
+            _id: null,
+            total: {
+              $sum: "$historyBet.totalMoneyGetAfterBet",
+            },
+          },
+        },
+      ]);
+
+      const tempTotal = (totalMoney[0]?.total || 0) + (totalMoneyBet[0]?.total || 0);
+
       const user = await this.model.findOneAndUpdate({ _id: userId }, { $set: { totalMoney: tempTotal } }, { new: true });
       if (!user) {
         throw new AppError(StatusCodes.BAD_REQUEST, "Can't find profile");
@@ -145,7 +159,23 @@ export class UserService {
   }
 
   async createBet(userId: string, payload: ConsumerBetInput) {
-    return await this.model.findOneAndUpdate({ _id: userId }, { $push: { historyBet: payload } });
+    return await this.model.findOneAndUpdate(
+      { _id: userId },
+      {
+        $push: {
+          historyBet: {
+            $each: [
+              {
+                ...payload,
+                totalMoneyGetAfterBet: -1 * payload.moneyBet,
+              },
+            ],
+            $position: 0,
+            $slice: -50,
+          },
+        },
+      }
+    );
   }
 
   async getHistoryBet(userId: string) {

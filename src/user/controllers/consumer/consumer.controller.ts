@@ -115,15 +115,18 @@ export class ConsumerController {
     const schema: JSONSchemaType<ConsumerBetInput> = {
       type: "object",
       properties: {
-        totalMoney: { type: "number" },
-        bonus: { type: "number" },
-        winOrLose: { type: "string" },
-        typeBet: { type: "string" },
-        region: { type: "string" },
+        moneyBet: { type: "number" },
         numberBet: { type: "string" },
-        rateBet: { type: "number" },
+        gameBet: { type: "string" },
+        miniGameBet: { type: "string" },
+        region: { type: "string" },
+        dai: { type: "string" },
+        moneyOneNumber: { type: "number" },
+        winOneNumber: { type: "number" },
+        dateBet: { type: "string" },
+        ratio: { type: "string" },
       },
-      required: ["totalMoney", "bonus", "typeBet", "winOrLose", "region", "numberBet", "rateBet"],
+      required: ["moneyBet", "numberBet", "gameBet", "miniGameBet", "region", "dai", "moneyOneNumber", "winOneNumber", "dateBet", "ratio"],
     };
     return async (req, res, next) => {
       const user = req.user;

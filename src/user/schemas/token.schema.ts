@@ -29,8 +29,6 @@ const tokenSchema = new mongoose.Schema<Token>(
   }
 );
 
-tokenSchema.index({ expires: 1 }, { expireAfterSeconds: 60 * 60 * 24 });
-
 tokenSchema.plugin(mongoosePaginate);
 
 export type TokenDoc = Token & Document;
