@@ -17,13 +17,16 @@ export type ConsumerBankAccountInput = {
 };
 
 export type ConsumerBetInput = {
-  totalMoney: number;
-  bonus: number;
-  winOrLose: string;
-  typeBet: string;
-  region: string;
+  moneyBet: number;
   numberBet: string;
-  rateBet: number;
+  gameBet: string;
+  miniGameBet: string;
+  region: string;
+  dai: string;
+  moneyOneNumber: number;
+  winOneNumber: number;
+  dateBet: string;
+  ratio: string;
 };
 
 export type ConsumerMoneyInput = {

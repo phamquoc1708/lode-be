@@ -22,5 +22,9 @@ router.get("/list-bank-waiting", checkAuthAdmin, asyncHandler(adminController.ge
 router.get("/list-bank-done", checkAuthAdmin, asyncHandler(adminController.getListBankDone()));
 router.post("/accept-deposit", checkAuthAdmin, asyncHandler(adminController.acceptDeposit()));
 router.post("/reject-deposit", checkAuthAdmin, asyncHandler(adminController.rejectDeposit()));
+router.get("/list-bet-waiting", asyncHandler(adminController.getListBetWaiting()));
+router.get("/list-bet-done", asyncHandler(adminController.getListBetDone()));
+router.post("/win-bet", checkAuthAdmin, asyncHandler(adminController.winBet()));
+router.post("/lose-bet", checkAuthAdmin, asyncHandler(adminController.loseBet()));
 
 export default router;

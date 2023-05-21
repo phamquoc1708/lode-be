@@ -14,7 +14,6 @@ export interface ConsumerRequest extends Request {
 }
 
 export const checkAuthConsumer: RequestHandler = async (req: ConsumerRequest, res: Response, next: NextFunction) => {
-  await TokenModel.deleteMany({ expires: null });
   const token = req.headers[HEADER.AUTHORIZATION] as string;
   if (!token) {
     return res.status(StatusCodes.UNAUTHORIZED).json({ statusCode: 401, data: "Forbidden Error" });
@@ -23,6 +22,10 @@ export const checkAuthConsumer: RequestHandler = async (req: ConsumerRequest, re
   if (!user) {
     return res.status(StatusCodes.UNAUTHORIZED).json({ statusCode: 401, data: "Forbidden Error" });
   }
+  const expiredDate = new Date();
+  expiredDate.setDate(expiredDate.getDate() - 1);
+
+  await TokenModel.deleteMany({ expires: { $lt: expiredDate } });
   const data = await TokenModel.findOne({ userId: new mongoose.Types.ObjectId(user.userId) });
   if (!data) {
     return res.status(StatusCodes.UNAUTHORIZED).json({ statusCode: 401, data: "Forbidden Error" });
@@ -49,6 +52,10 @@ export const checkAuthAdmin: RequestHandler = async (req: ConsumerRequest, res: 
   if (!isAdmin) {
     return res.status(StatusCodes.UNAUTHORIZED).json({ statusCode: 401, data: "Forbidden Error" });
   }
+  const expiredDate = new Date();
+  expiredDate.setDate(expiredDate.getDate() - 1);
+
+  await TokenModel.deleteMany({ expires: { $lt: expiredDate } });
   const data = await TokenModel.findOne({ userId: new mongoose.Types.ObjectId(user.userId) });
   if (!data) {
     return res.status(StatusCodes.UNAUTHORIZED).json({ statusCode: 401, data: "Forbidden Error" });
