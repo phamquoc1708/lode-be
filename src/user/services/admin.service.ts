@@ -29,6 +29,21 @@ export class AdminService {
           },
         },
       },
+      {
+        $unwind: "$historyMoney",
+      },
+      {
+        $sort: {
+          "historyMoney.createdAt": -1, // Sort in ascending order (use -1 for descending order)
+        },
+      },
+      {
+        $group: {
+          _id: "$_id",
+          username: { $first: "$username" },
+          historyMoney: { $push: "$historyMoney" },
+        },
+      },
     ]);
     const data: Array<any> = [];
     for (let i = 0; i < result.length; i++) {
@@ -65,6 +80,21 @@ export class AdminService {
               cond: { $in: ["$$money.status", ["FAIL", "SUCCESS"]] },
             },
           },
+        },
+      },
+      {
+        $unwind: "$historyMoney",
+      },
+      {
+        $sort: {
+          "historyMoney.createdAt": -1, // Sort in ascending order (use -1 for descending order)
+        },
+      },
+      {
+        $group: {
+          _id: "$_id",
+          username: { $first: "$username" },
+          historyMoney: { $push: "$historyMoney" },
         },
       },
     ]);
@@ -128,6 +158,21 @@ export class AdminService {
           },
         },
       },
+      {
+        $unwind: "$historyBet",
+      },
+      {
+        $sort: {
+          "historyBet.createdAt": -1, // Sort in ascending order (use -1 for descending order)
+        },
+      },
+      {
+        $group: {
+          _id: "$_id",
+          username: { $first: "$username" },
+          historyBet: { $push: "$historyBet" },
+        },
+      },
     ]);
     const data: Array<any> = [];
     for (let i = 0; i < result.length; i++) {
@@ -170,6 +215,21 @@ export class AdminService {
               cond: { $in: ["$$bet.status", ["LOSE", "WIN"]] },
             },
           },
+        },
+      },
+      {
+        $unwind: "$historyBet",
+      },
+      {
+        $sort: {
+          "historyBet.createdAt": -1, // Sort in ascending order (use -1 for descending order)
+        },
+      },
+      {
+        $group: {
+          _id: "$_id",
+          username: { $first: "$username" },
+          historyBet: { $push: "$historyBet" },
         },
       },
     ]);
